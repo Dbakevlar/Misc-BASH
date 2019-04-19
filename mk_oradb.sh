@@ -127,7 +127,7 @@ az vm create \
     --admin-username $adminuser \
     --generate-ssh-keys
 
-#    --size Standard_DS2_v2 \
+#  --size Standard_DS2_v2 \
 
 # Create Storage Disks to use with database
 az vm disk attach --vm-name $oraname \
