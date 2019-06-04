@@ -71,8 +71,7 @@ fi
 #Check for Template file that we will update
 
 export templateFile1="templatehdi.json"
-
-
+touch $templateFile1
 
 if [ ! -f "$templateFile1" ]; then
 
