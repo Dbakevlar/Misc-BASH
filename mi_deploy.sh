@@ -13,9 +13,8 @@ IFS=$'\n\t'
 # IFS: deters from bugs, looping arrays or arguments (e.g. $@)
 #---------------------------------------------------------------
 
-usage() { echo "Usage: $0 -s <subscriptionID> -g <groupname> -i <instancename> -v <vnet> -u <username> -p <password> -l <zone>" 1>&2; exit 1; }
+usage() { echo "Usage: $0 -g <groupname> -i <instancename> -v <vnet> -u <username> -p <password> -l <zone>" 1>&2; exit 1; }
 
-declare subscriptionID=""
 declare groupname=""
 declare instancename=""
 declare vnet=""
@@ -25,11 +24,8 @@ declare zone=""
 
 # Initialize parameters specified from command line
 #while getopts ":i:g:p:l:" arg; do
-while getopts ":s:g:i:v:u:p:l:" arg; do
+while getopts ":g:i:v:u:p:l:" arg; do
         case "${arg}" in
-                s)
-                        subscriptionID=${OPTARG}
-                        ;;
                 g)
                         groupname=${OPTARG}
                         ;;
@@ -52,15 +48,6 @@ while getopts ":s:g:i:v:u:p:l:" arg; do
 done
 shift $((OPTIND-1))
 
-
-echo "Here is your Subscription ID Information"
-az account show | grep id
-
-if [[ -z "$subscriptionID" ]]; then
-	echo "Copy and Paste the Subscription ID from above, without the quotes to be used:"
-	read subscriptionID
-	[[ "${subscriptionID:?}" ]]
-fi
 
 if [[ -z "$groupname" ]]; then
         echo "Choose a Group name to house all resources for your managed instance inside:"
@@ -94,7 +81,7 @@ fi
 
 if [[ -z "$zone" ]]; then
         echo "Finally, choose an Azure Location Zone to create everything in. Choose one from the following list"
-        az account list-locations | grep name | awk  '{print $2}'| tr -d \"\,
+        az account list-locations | grep name | grep us | grep -v australia | awk  '{print $2}'| tr -d \"\,
         echo "Enter the location name:"
         read zone
         [[ "${zone:?}" ]]
@@ -103,6 +90,7 @@ fi
 #Last of parameter information for the script
 
 echo "getting IP Address for Azure Cloud Shell for firewall rule"
+export subscriptionID=$(az account show | grep id |awk  '{print $2}'| tr -d \"\,)
 export myip=$(curl http://ifconfig.me)
 export startip=$myip
 export endip=$myip
