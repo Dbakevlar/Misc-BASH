@@ -2,12 +2,12 @@
 set -euo pipefail
 IFS=$'\n\t'
 # Set Job Run name here for logging:
-export jobrun=ora_db
+export jobrun=ora_vm
 
 #---------------------------------------------------------------
 # mk_oravm.sh
 # keeps to Microsoft bash script formatting
-# creates a Linux VM with Oracle software after choosing installation sku and type of install.
+# creates a Linux VM with Oracle software after choosing installation urn and type of install.
 # Requirements- sku information, (versions of install for sript call)
 #---------------------------------------------------------------
 # -e: immediately exit if anything is missing
@@ -15,11 +15,10 @@ export jobrun=ora_db
 # IFS: deters from bugs, looping arrays or arguments (e.g. $@)
 #---------------------------------------------------------------
 
-usage() { echo "Usage: $0 -g <groupname> -s <sku> -v <version> -o <oraname> -sz <size> -a <adminuser> -l <zone> " 1>&2; exit 1; }
+usage() { echo "Usage: $0 -g <groupname> -u <urn> -o <oraname> -sz <size> -a <adminuser> -l <zone> " 1>&2; exit 1; }
 
 declare groupname=""
-declare sku=""
-declare version=""
+declare urn=""
 declare oraname=""
 declare size=""
 declare adminuser=""
@@ -32,11 +31,8 @@ while getopts ":g:s:v:o:sz:a:l:" arg; do
 		g)
 			groupname=${OPTARG}
 			;;
-		s)
-			sku=${OPTARG}
-			;;
-		v)
-			version=${OPTARG}
+		u)
+			urn=${OPTARG}
 			;;
 		o)
 			oraname=${OPTARG}
@@ -62,21 +58,14 @@ if [[ -z "$groupname" ]]; then
 fi
 
 # Create the latest version of Oracle VM installations available and push to a file
-az vm image list --offer Oracle --all --publisher Oracle >db.lst
+az vm image list --offer Oracle --all --publisher Oracle --output table >db.lst
 
-if [[ -z "$sku" ]]; then
-	echo "Here's the installation version, from 12c through 18c available for Oracle: "
-    cat db.lst | grep sku | awk  '{print $2}'| tr -d \"\,
-	echo "Enter the version you'd like to install, the numbering convention must be exact, feel free to copy from the list and paste here:"
-	read sku
-	[[ "${sku:?}" ]]
-fi
-
-if [[ -z "$version" ]]; then
-	echo "Along with installation version, the script needs to know if Enterprise, (Ee) or Standard, (Se) version?"
-	echo "Enter either Ee or Se and the answer IS cap-sensitive"
-	read version
-	[[ "${version:?}" ]]
+if [[ -z "$urn" ]]; then
+	echo "Here's the installation version urns available, including Oracle and Oracle Linux "
+     cat db.lst | awk  '{print $4}'
+	echo "Enter the urn you'd like to install, feel free to copy from the list and paste here:"
+	read urn
+	[[ "${urn:?}" ]]
 fi
 
 if [[ -z "$oraname" ]]; then
@@ -108,9 +97,6 @@ if [[ -z "$zone" ]]; then
 	[[ "${zone:?}" ]]
 fi
 
-# Get Correct URN value from sku and version entered:
-urn=$(cat db.lst | grep $version:$sku | grep urn | awk '{print $2}' | tr -d \"\,)
-export logfile=./$jobrun.txt
 
 # Build Steps
 
